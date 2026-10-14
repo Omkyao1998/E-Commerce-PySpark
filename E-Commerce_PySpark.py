@@ -27,7 +27,8 @@ def get_short_path(long_path):
         return long_path
 
 # Set Java path - CRITICAL: Must be BEFORE PySpark imports
-java_home = r"JAVA Home path"
+# Reads JAVA_HOME from your environment; falls back to a common Windows install path
+java_home = os.environ.get("JAVA_HOME", r"C:\Program Files\Java\jdk-17")
 
 if os.path.exists(java_home):
     # Convert to short path (C:\PROGRA~1\Java\jdk-17)
@@ -37,22 +38,9 @@ if os.path.exists(java_home):
     print(f" Using Java from: {java_home_short}")
 else:
     print(f" Java not found at: {java_home}")
-    print("Please update the java_home path in the script")
+    print("Set the JAVA_HOME environment variable to your JDK folder")
 
-# NOW import PySpark (after setting JAVA_HOME)
-from pyspark.sql import SparkSession, Window
-from pyspark.sql.functions import (
-    col, count, sum as spark_sum, avg, max as spark_max, min as spark_min,
-    round as spark_round, when, lit, concat_ws, countDistinct,
-    row_number, rank, dense_rank, lag, lead,
-    collect_list, collect_set, explode, trim, upper
-)
-from pyspark.sql.types import *
-
-# Rest of your code...
-#importing necessary libraries
-import pyspark
-from pyspark.sql import SparkSession
+# Import PySpark only after JAVA_HOME is set
 from pyspark.sql import SparkSession, Window
 from pyspark.sql.functions import (
     col, count, countDistinct, sum as spark_sum, avg, max as spark_max, min as spark_min,
@@ -66,8 +54,6 @@ from pyspark.sql.types import (
     StructType, StructField, StringType, IntegerType, 
     DoubleType, TimestampType, DateType, ArrayType
 )
-import random
-from datetime import datetime, timedelta
 
 # Function to create and configure Spark Session
 def create_spark_session():
@@ -92,7 +78,8 @@ def create_spark_session():
 
 # Configuration dictionary
 CONFIG = {
-    'data_file':'Data File Path',
+    # Input CSV: pass as first argument, or set DATA_FILE
+    'data_file': sys.argv[1] if len(sys.argv) > 1 else os.environ.get('DATA_FILE', 'data/Warehouse_and_Retail_Sales.csv'),
 
     'csv_options':{
         'header': True,
@@ -559,7 +546,7 @@ def main():
         print(f" Unique Suppliers: {total_suppliers}")
 
         #Export Results (Specify output path)
-        output_path = "Output Path"
+        output_path = os.environ.get("OUTPUT_PATH", "output")
         export_results(overall_metrics, output_path, "Overall_Metrics")
         export_results(yearly_sales, output_path, "Yearly_Sales")
         export_results(monthly_sales, output_path, "Monthly_Sales")
